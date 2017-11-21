@@ -1,9 +1,15 @@
 # Usage
 
-    docker run -v `pwd`:/work klamar/compress
-    docker run -v `pwd`:/work klamar/compress --verbose
+    docker run --rm -v `pwd`:/work klamar/compress
+    docker run --rm -v `pwd`:/work klamar/compress --verbose
 
 The compressor inside the docker image is compressing everything in the **/work** directory. So mount the directory you want to run the compressor against into the /work directory.
+
+By default the script will ensure the compressed files:
+
+* have the same owner like the original one (uid/gid)
+* have the same creation time
+* have the same file permissions (chmod)
 
 ## Command line flags
 

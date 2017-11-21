@@ -105,8 +105,15 @@ class Compressor(object):
             return
 
         logger.info("%s: compressing gzip" % path)
-        command = [self.gzip_exec_path, "-k", "-9", path]
-        subprocess.check_output(command)
+        command = [self.gzip_exec_path, "-c", "-9", path]
+
+        with open(gzip_path, "wb") as f:
+            subprocess.call(command, stdout=f)
+
+        stat = os.stat(path)
+        os.utime(gzip_path, (stat.st_atime, stat.st_mtime))
+        os.chmod(gzip_path, stat.st_mode)
+        os.chown(gzip_path, stat.st_uid, stat.st_gid)
 
     def exec_brotli(self, path):
         brotli_path = path + ".br"
