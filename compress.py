@@ -11,7 +11,7 @@ import os
 import subprocess
 import shutil
 
-from os.path import abspath, join
+from os.path import abspath, join, islink
 from os import walk
 import fnmatch
 import sys
@@ -19,6 +19,10 @@ import sys
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('path', metavar='PATH', nargs='*', type=str)
 parser.add_argument('-v', '--verbose', dest="verbose", action="store_true")
+parser.add_argument('--follow-symlinks', dest="follow_symlinks", action="store_true")
+parser.add_argument('--no-png', dest="no_png", action="store_true")
+parser.add_argument('--no-gzip', dest="no_gzip", action="store_true")
+parser.add_argument('--no-brotli', dest="no_brotli", action="store_true")
 args = parser.parse_args()
 
 logger = logging.getLogger()
@@ -27,9 +31,14 @@ sh.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(name)-12s %(mes
 logger.addHandler(sh)
 logger.setLevel(logging.DEBUG)
 
-def locate(pattern, root, followlinks=True):
-    '''Locate all files matching supplied filename pattern in and below
-    supplied root directory.'''
+def locate(pattern, root, followlinks=None):
+    """
+    Locate all files matching supplied filename pattern in and below
+    supplied root directory.
+    """
+    if followlinks is None:
+        followlinks = args.followlinks
+
     for path, _, files in walk(abspath(root), followlinks=followlinks):
         for filename in fnmatch.filter(files, pattern):
             yield join(path, filename)
@@ -71,6 +80,10 @@ class Compressor(object):
             return
 
         # ignore symlinks
+        if islink(path):
+            log_debug("Ignoring %s: is a link" % path)
+            return
+
         if not isfile(path):
             log_debug("Ignoring %s: not a file" % path)
             return
@@ -125,5 +138,16 @@ class Compressor(object):
         os.utime(path, (stat.st_atime, stat.st_mtime))
         os.chmod(path, stat.st_mode)
 
+    def exec_noop(self, *args, **kwargs):
+        pass
+
 if __name__ == '__main__':
-    Compressor().main()
+    compressor = Compressor()
+    if args.no_png:
+        compressor.exec_optipng = compressor.exec_noop
+    if args.no_gzip:
+        compressor.exec_gzip = compressor.exec_noop
+    if args.no_brotli:
+        compressor.exec_brotli = compressor.exec_noop
+
+    compressor.main()

@@ -1,0 +1,11 @@
+version: '3'
+services:
+  agent:
+    container_name: klamar_compress
+    build:
+      context: .
+    image: klamar/compress:latest
+    volumes:
+    - .:/data/app
+    - ./test:/work
+    entrypoint: ['/data/app/compress.py', '-v']

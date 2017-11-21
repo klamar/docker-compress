@@ -15,7 +15,9 @@ RUN set -ex \
     && tar xf /tmp/optipng.tar.gz -C /tmp \
     && cd /tmp/optipng-0.7.6 \
     && ./configure \
-    && make install
+    && make install \
+    && rm -rf /tmp/optipng* \
+    && apt-get clean
 
 ADD . /data/app
 
