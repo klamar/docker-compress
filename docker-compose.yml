@@ -4,8 +4,18 @@ services:
     container_name: klamar_compress
     build:
       context: .
-    image: klamar/compress:latest
+    image: klamar/compress:alpline2
     volumes:
     - .:/data/app
     - ./test:/work
-    entrypoint: ['/data/app/compress.py', '-v']
+    entrypoint: ['/usr/local/bin/python', '/data/app/compress.py', '-v', '--exclude=*.md,dir/*']
+
+  test:
+    container_name: klamar_compress_test
+    build:
+      context: .
+    image: klamar/compress:alpline2
+    volumes:
+    - .:/data/app
+    - ./test:/work
+    entrypoint: ['/usr/local/bin/python', '/data/app/test.py']

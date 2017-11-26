@@ -14,6 +14,7 @@ By default the script will ensure the compressed files:
 ## Command line flags
 
 * **-v|--verbose** Enable debug output
+* **-e|--exclude** exclude files matching this given pattern (e.g.: --exclude="\*.jpg,dir/\*")
 * **-h|--help** Shows some help information
 * **--follow-symlinks** follows symbolic links (default=no follow)
 * **--no-png** Skip png optimization

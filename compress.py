@@ -18,6 +18,7 @@ import sys
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('path', metavar='PATH', nargs='*', type=str)
+parser.add_argument('-e', '--exclude', dest='exclude', type=str, help='exclude files matching this given pattern (e.g.: "*.jpg,dir/*")')
 parser.add_argument('-v', '--verbose', dest="verbose", action="store_true")
 parser.add_argument('--follow-symlinks', dest="follow_symlinks", action="store_true")
 parser.add_argument('--no-png', dest="no_png", action="store_true")
@@ -30,6 +31,8 @@ sh = logging.StreamHandler(sys.stdout)
 sh.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(name)-12s %(message)s", datefmt='%Y-%m-%d %H:%M:%S'))
 logger.addHandler(sh)
 logger.setLevel(logging.DEBUG)
+
+excludes = [e for e in args.exclude.split(",")] if args.exclude else []
 
 def locate(pattern, root, followlinks=None):
     """
@@ -65,8 +68,22 @@ class Compressor(object):
             logger.info("Compressing files in %s" % root)
 
             counter = 0
-            for path in locate("*", root, followlinks=False):
-                self.handle_path(path)
+            for abs_path in locate("*", root, followlinks=False):
+                rel_path = abs_path[len("root")+2:]
+
+                if excludes:
+                    exclude_match = False
+                    for exclude in excludes:
+                        if fnmatch.fnmatch(rel_path, exclude) or fnmatch.fnmatch(abs_path, exclude):
+                            log_debug("Ignoring %s: is excluded" % abs_path)
+                            counter += 1
+                            exclude_match = True
+                            break
+                    if exclude_match:
+                        continue
+
+
+                self.handle_path(abs_path)
                 counter += 1
 
             logger.info("Checked %s files" % counter)
@@ -90,7 +107,7 @@ class Compressor(object):
 
         name, extension = os.path.splitext(path)
         if extension in self.ignore_extensions:
-            log_debug("Ignoring %s: is a already compressed file" % path)
+            log_debug("Ignoring %s: is already a compressed file" % path)
             return
 
         if extension == ".png":
